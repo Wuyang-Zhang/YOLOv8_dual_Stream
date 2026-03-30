@@ -32,7 +32,7 @@ MANIFEST、
 *.txt
 runs/
 weights/
-
+ultralytics/data/YOLO-10000-18/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

@@ -23,7 +23,6 @@ from ultralytics.data.utils import IMG_FORMATS, VID_FORMATS
 from ultralytics.utils import RANK, colorstr
 from ultralytics.utils.checks import check_file
 
-from .dataset import GroundingDataset, YOLODataset, YOLOMultiModalDataset
 from .utils import PIN_MEMORY
 
 
@@ -86,6 +85,8 @@ def seed_worker(worker_id):  # noqa
 # 修改以符合双流数据读取
 def build_yolo_dataset(cfg, img_path_rgb, img_path_depth, batch, data, mode="train", rect=False, stride=32, multi_modal=False):
     """Build YOLO Dataset."""
+    from .dataset import YOLODataset, YOLOMultiModalDataset
+
     dataset = YOLOMultiModalDataset if multi_modal else YOLODataset
     return dataset(
         img_path_rgb=img_path_rgb,
@@ -109,6 +110,8 @@ def build_yolo_dataset(cfg, img_path_rgb, img_path_depth, batch, data, mode="tra
 
 def build_grounding(cfg, img_path, json_file, batch, mode="train", rect=False, stride=32):
     """Build YOLO Dataset."""
+    from .dataset import GroundingDataset
+
     return GroundingDataset(
         img_path=img_path,
         json_file=json_file,

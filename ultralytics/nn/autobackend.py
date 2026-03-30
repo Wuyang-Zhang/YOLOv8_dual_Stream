@@ -648,9 +648,22 @@ class AutoBackend(nn.Module):
             >>> model = AutoBackend(weights="path/to/model.onnx")
             >>> model_type = model._model_type()  # returns "onnx"
         """
-        from ultralytics.engine.exporter import export_formats
-
-        sf = list(export_formats().Suffix)  # export suffixes
+        # Keep this local to avoid importing the exporter stack during plain prediction.
+        sf = [
+            ".pt",
+            ".torchscript",
+            ".onnx",
+            "_openvino_model",
+            ".engine",
+            ".mlpackage",
+            "_saved_model",
+            ".pb",
+            ".tflite",
+            "_edgetpu.tflite",
+            "_web_model",
+            "_paddle_model",
+            "_ncnn_model",
+        ]
         if not is_url(p) and not isinstance(p, str):
             check_suffix(p, sf)  # checks
         name = Path(p).name
