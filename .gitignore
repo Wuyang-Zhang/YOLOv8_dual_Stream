@@ -173,7 +173,7 @@ pnnx*
 /ultralytics/assets/
 
 yolov8_heatmap.py
-dataset.py
+/dataset.py
 heatmap.py
 论文素材/
 论文验证/

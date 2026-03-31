@@ -208,27 +208,33 @@ class BaseDataset(Dataset):
             pbar = TQDM(enumerate(results), total=self.ni, disable=LOCAL_RANK > 0)
             for i, x in pbar:
                 if self.cache == "disk":
-                    b += self.npy_files[i].stat().st_size
+                    b += self.npy_files_rgb[i].stat().st_size + self.npy_files_depth[i].stat().st_size
                 else:  # 'ram'
-                    self.ims[i], self.im_hw0[i], self.im_hw[i] = x  # im, hw_orig, hw_resized = load_image(self, i)
-                    b += self.ims[i].nbytes
+                    im_rgb, im_depth, hw0, hw = x
+                    self.ims_rgb[i], self.im_hw0_rgb[i], self.im_hw_rgb[i] = im_rgb, hw0, hw
+                    self.ims_depth[i], self.im_hw0_depth[i], self.im_hw_depth[i] = im_depth, hw0, hw
+                    b += im_rgb.nbytes + im_depth.nbytes
                 pbar.desc = f"{self.prefix}Caching images ({b / gb:.1f}GB {storage})"
             pbar.close()
 
     def cache_images_to_disk(self, i):
         """Saves an image as an *.npy file for faster loading."""
-        f = self.npy_files[i]
-        if not f.exists():
-            np.save(f.as_posix(), cv2.imread(self.im_files[i]), allow_pickle=False)
+        f_rgb = self.npy_files_rgb[i]
+        f_depth = self.npy_files_depth[i]
+        if not f_rgb.exists():
+            np.save(f_rgb.as_posix(), cv2.imread(self.im_files_rgb[i]), allow_pickle=False)
+        if not f_depth.exists():
+            np.save(f_depth.as_posix(), cv2.imread(self.im_files_depth[i]), allow_pickle=False)
 
     def check_cache_ram(self, safety_margin=0.5):
         """Check image caching requirements vs available memory."""
         b, gb = 0, 1 << 30  # bytes of cached images, bytes per gigabytes
         n = min(self.ni, 30)  # extrapolate from 30 random images
         for _ in range(n):
-            im = cv2.imread(random.choice(self.im_files))  # sample image
-            ratio = self.imgsz / max(im.shape[0], im.shape[1])  # max(h, w)  # ratio
-            b += im.nbytes * ratio**2
+            im_rgb = cv2.imread(random.choice(self.im_files_rgb))
+            im_depth = cv2.imread(random.choice(self.im_files_depth))
+            ratio = self.imgsz / max(im_rgb.shape[0], im_rgb.shape[1])  # max(h, w)  # ratio
+            b += (im_rgb.nbytes + im_depth.nbytes) * ratio**2
         mem_required = b * self.ni / n * (1 + safety_margin)  # GB required to cache dataset into RAM
         mem = psutil.virtual_memory()
         success = mem_required < mem.available  # to cache or not to cache, that is the question

@@ -227,7 +227,12 @@ class DetectionValidator(BaseValidator):
 
     def get_dataloader(self, dataset_path, batch_size):
         """Construct and return dataloader."""
-        dataset = self.build_dataset('D:\\project\\datasets\\YOLO-10000-18\\valid\\images',dataset_path, batch=batch_size, mode="val")
+        split = self.args.split
+        dataset_rgb = self.data.get(f"{split}_rgb") or self.data.get("val_rgb") or self.data.get("test_rgb")
+        dataset_depth = self.data.get(f"{split}_depth") or self.data.get("val_depth") or self.data.get("test_depth")
+        if dataset_rgb is None or dataset_depth is None:
+            raise FileNotFoundError(f"Validation split '{split}' is missing RGB/depth paths in data config.")
+        dataset = self.build_dataset(dataset_rgb, dataset_depth, batch=batch_size, mode="val")
         return build_dataloader(dataset, batch_size, self.args.workers, shuffle=False, rank=-1)  # return dataloader
 
     def plot_val_samples(self, batch, ni):
