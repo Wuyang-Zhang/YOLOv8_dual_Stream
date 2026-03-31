@@ -425,7 +425,7 @@ class AutoBackend(nn.Module):
                 p.requires_grad = False
 
         self.__dict__.update(locals())  # assign all variables to self
-
+    # 输入层面：把两张图拆成 RGB 和深度/IR
     def forward(self, ims, augment=False, visualize=False, embed=None):
         """
         Runs inference on the YOLOv8 MultiBackend model.
@@ -438,7 +438,8 @@ class AutoBackend(nn.Module):
 
         Returns:
             (tuple): Tuple containing the raw output tensor, and processed output for visualization (if visualize=True)
-        """
+        """ 
+        # 输入拆双流
         if isinstance(ims, torch.Tensor):
             im = ims[0:1, :, :, :]  # 选取第一个张量
             im_depth = ims[1:2, :, :, :]  # 选取第二个张量
@@ -648,22 +649,9 @@ class AutoBackend(nn.Module):
             >>> model = AutoBackend(weights="path/to/model.onnx")
             >>> model_type = model._model_type()  # returns "onnx"
         """
-        # Keep this local to avoid importing the exporter stack during plain prediction.
-        sf = [
-            ".pt",
-            ".torchscript",
-            ".onnx",
-            "_openvino_model",
-            ".engine",
-            ".mlpackage",
-            "_saved_model",
-            ".pb",
-            ".tflite",
-            "_edgetpu.tflite",
-            "_web_model",
-            "_paddle_model",
-            "_ncnn_model",
-        ]
+        from ultralytics.engine.exporter import export_formats
+
+        sf = list(export_formats().Suffix)  # export suffixes
         if not is_url(p) and not isinstance(p, str):
             check_suffix(p, sf)  # checks
         name = Path(p).name
